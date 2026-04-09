@@ -1,0 +1,463 @@
+<!DOCTYPE html><html lang="ru"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aura AI</title>
+<meta name="description" content="Превращаем фото в искусство с помощью нейросетей. AI-портреты и видео.">
+<link rel="icon" type="image/png" href="images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  min-height:100dvh;
+  display:flex;align-items:center;justify-content:center;
+  background:#06060e;
+  font-family:'Inter',system-ui,sans-serif;
+  color:#fff;
+  padding:24px;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ── Background image with cinematic pulse ── */
+.bg-image{
+  position:fixed;top:50%;left:50%;
+  width:130%;height:130%;
+  object-fit:cover;
+  transform:translate(-50%,-50%);
+  opacity:.5;
+  z-index:0;
+  animation:bg-breathe 14s ease-in-out infinite alternate;
+}
+@keyframes bg-breathe{
+  0%{transform:translate(-50%,-50%) scale(1);filter:brightness(.7) saturate(1.1)}
+  100%{transform:translate(-50%,-50%) scale(1.06);filter:brightness(.85) saturate(1.3)}
+}
+
+/* ── Deep overlay for contrast ── */
+.bg-overlay{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 40%,transparent 20%,rgba(6,6,14,.6) 70%),
+    linear-gradient(180deg,rgba(6,6,14,.2) 0%,rgba(6,6,14,.5) 100%);
+}
+
+/* ── Vibrant color orbs (dark glassmorphism background) ── */
+.orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);will-change:transform}
+.orb-1{
+  width:500px;height:500px;
+  top:15%;left:10%;
+  background:radial-gradient(circle,rgba(100,60,255,.2),transparent 70%);
+  animation:orb-float 16s ease-in-out infinite alternate;
+}
+.orb-2{
+  width:400px;height:400px;
+  bottom:10%;right:5%;
+  background:radial-gradient(circle,rgba(244,114,182,.15),transparent 70%);
+  animation:orb-float 12s ease-in-out 3s infinite alternate-reverse;
+}
+.orb-3{
+  width:350px;height:350px;
+  top:50%;left:55%;
+  background:radial-gradient(circle,rgba(56,182,255,.12),transparent 70%);
+  animation:orb-float 18s ease-in-out 6s infinite alternate;
+}
+@keyframes orb-float{
+  0%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(30px,-20px) scale(1.15)}
+  100%{transform:translate(-15px,25px) scale(.95)}
+}
+
+/* ── Canvas particles ── */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none}
+
+/* ── Noise texture ── */
+.noise{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  opacity:.035;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:128px;
+}
+
+/* ── Glass card ── */
+.hub{
+  position:relative;z-index:2;
+  text-align:center;
+  max-width:440px;width:100%;
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(40px) saturate(1.4);
+  -webkit-backdrop-filter:blur(40px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:32px;
+  padding:48px 36px 40px;
+  box-shadow:
+    0 24px 80px rgba(0,0,0,.4),
+    0 0 0 0.5px rgba(255,255,255,.06) inset,
+    0 1px 0 rgba(255,255,255,.05) inset;
+  opacity:0;transform:translateY(24px) scale(.98);
+  animation:hub-in .8s cubic-bezier(.22,1,.36,1) .15s forwards;
+}
+
+/* ── Animated gradient border (subtle) ── */
+.hub::before{
+  content:'';position:absolute;inset:-1px;
+  border-radius:32px;z-index:-1;
+  background:conic-gradient(from 180deg at 50% 50%,
+    rgba(96,176,255,.15),
+    rgba(192,132,252,.15),
+    rgba(244,114,182,.15),
+    rgba(96,176,255,.15));
+  animation:border-rotate 8s linear infinite;
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;-webkit-mask-composite:xor;
+  padding:1px;
+  opacity:.5;
+}
+@keyframes border-rotate{to{--angle:360deg}}
+/* fallback: static gradient glow */
+.hub::after{
+  content:'';position:absolute;inset:-2px;
+  border-radius:34px;z-index:-2;
+  background:conic-gradient(from 0deg,
+    rgba(96,176,255,.08),
+    rgba(192,132,252,.08),
+    rgba(244,114,182,.08),
+    rgba(96,176,255,.08));
+  filter:blur(20px);
+  opacity:0;
+  transition:opacity .5s ease;
+}
+.hub:hover::after{opacity:1}
+
+@keyframes hub-in{
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* ── Logo ── */
+.hub-logo{
+  width:140px;height:140px;
+  margin:0 auto 24px;
+  position:relative;
+}
+.hub-logo::before{
+  content:'';position:absolute;inset:-3px;
+  border-radius:50%;
+  background:conic-gradient(from 0deg,#60b0ff,#c084fc,#f472b6,#60b0ff);
+  animation:ring-spin 6s linear infinite;
+  opacity:.5;
+}
+.hub-logo::after{
+  content:'';position:absolute;inset:-3px;
+  border-radius:50%;
+  background:conic-gradient(from 0deg,#60b0ff,#c084fc,#f472b6,#60b0ff);
+  animation:ring-spin 6s linear infinite;
+  filter:blur(16px);
+  opacity:.3;
+}
+@keyframes ring-spin{to{transform:rotate(360deg)}}
+
+.hub-logo img{
+  position:relative;z-index:1;
+  width:100%;height:100%;
+  object-fit:cover;
+  border-radius:50%;
+  display:block;
+}
+
+/* ── Title ── */
+h1{
+  font-size:44px;
+  font-weight:800;
+  letter-spacing:-1.5px;
+  line-height:1.05;
+  margin-bottom:8px;
+  background:linear-gradient(135deg,#7dd3fc 0%,#c4b5fd 45%,#f9a8d4 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 2px 10px rgba(192,132,252,.2));
+}
+
+.hub-desc{
+  color:rgba(255,255,255,.5);
+  font-size:15px;
+  font-weight:400;
+  letter-spacing:.4px;
+  margin-bottom:36px;
+  line-height:1.5;
+}
+
+/* ── Link buttons ── */
+.hub-links{
+  display:flex;flex-direction:column;
+  gap:10px;
+}
+
+.hub-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:16px 24px;
+  border:none;border-radius:16px;
+  font-family:inherit;
+  font-size:15px;font-weight:600;
+  color:#fff;
+  text-decoration:none;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .35s ease;
+  opacity:0;transform:translateY(12px);
+  animation:btn-in .5s cubic-bezier(.22,1,.36,1) forwards;
+}
+.hub-btn:nth-child(1){animation-delay:.4s}
+.hub-btn:nth-child(2){animation-delay:.5s}
+.hub-btn:nth-child(3){animation-delay:.6s}
+
+/* Shimmer sweep on hover */
+.hub-btn::after{
+  content:'';position:absolute;top:0;left:-100%;
+  width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+  transition:left .5s ease;
+  pointer-events:none;
+}
+.hub-btn:hover::after{left:120%}
+
+.hub-btn:hover{transform:translateY(-3px) scale(1.01)}
+.hub-btn:active{transform:translateY(0) scale(.98)}
+
+.hub-btn svg{width:20px;height:20px;fill:#fff;flex-shrink:0}
+
+/* ── Button variants ── */
+.hub-btn--tg{
+  background:linear-gradient(135deg,#229ED9 0%,#1a8fc8 100%);
+  box-shadow:0 4px 24px rgba(34,158,217,.25),0 0 0 1px rgba(34,158,217,.15) inset;
+}
+.hub-btn--tg:hover{box-shadow:0 8px 32px rgba(34,158,217,.4),0 0 0 1px rgba(34,158,217,.2) inset}
+
+.hub-btn--vk{
+  background:linear-gradient(135deg,#5181b8 0%,#3f6da3 100%);
+  box-shadow:0 4px 24px rgba(81,129,184,.25),0 0 0 1px rgba(81,129,184,.15) inset;
+}
+.hub-btn--vk:hover{box-shadow:0 8px 32px rgba(81,129,184,.4),0 0 0 1px rgba(81,129,184,.2) inset}
+
+.hub-btn--web{
+  background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 50%,#a855f7 100%);
+  box-shadow:0 4px 24px rgba(139,92,246,.25),0 0 0 1px rgba(139,92,246,.15) inset;
+}
+.hub-btn--web:hover{box-shadow:0 8px 32px rgba(139,92,246,.4),0 0 0 1px rgba(139,92,246,.2) inset}
+
+@keyframes btn-in{
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── Footer ── */
+.hub-footer{
+  margin-top:32px;
+  color:rgba(255,255,255,.18);
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+
+/* ── Loading ── */
+#loading{color:rgba(255,255,255,.25);font-size:13px;padding:16px 0}
+.hidden{display:none}
+
+/* ── Mobile ── */
+@media(max-width:480px){
+  body{padding:16px}
+  .hub{padding:36px 24px 32px;border-radius:26px}
+  .hub-logo{width:120px;height:120px;margin-bottom:20px}
+  h1{font-size:36px;letter-spacing:-1px}
+  .hub-desc{margin-bottom:28px;font-size:14px}
+  .hub-btn{padding:15px 20px;font-size:14px;border-radius:14px}
+  .orb-1{width:300px;height:300px}
+  .orb-2{width:250px;height:250px}
+  .orb-3{width:200px;height:200px}
+}
+</style>
+</head>
+<body>
+
+<!-- Background image -->
+<img src="images/bg.png" alt="" class="bg-image">
+<div class="bg-overlay"></div>
+
+<!-- Color orbs -->
+<div class="orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- Canvas particles -->
+<canvas id="bgCanvas" width="1920" height="1080"></canvas>
+
+<!-- Noise texture -->
+<div class="noise"></div>
+
+<!-- Hub card -->
+<main class="hub">
+  <div class="hub-logo">
+    <img src="images/logo.png" alt="Aura AI">
+  </div>
+  <h1>Aura AI</h1>
+  <p class="hub-desc" id="subtitle">Превращаем фото в искусство</p>
+
+  <div id="loading" class="hidden">Загрузка...</div>
+
+  <div id="buttons" class="hub-links">
+    <a id="btn-tg" class="hub-btn hub-btn--tg" href="https://t.me/AuraVisionAI_bot RRR!!!">
+      <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 1 0 24 12.056A12.013 12.013 0 0 0 11.944 0Zm5.091 7.044l-1.6 7.536c-.12.54-.44.67-.89.418l-2.46-1.81-1.187 1.14c-.132.132-.242.242-.496.242l.177-2.507 4.56-4.117c.198-.177-.043-.275-.308-.098l-5.64 3.55-2.43-.757c-.528-.166-.54-.528.11-.782l9.5-3.66c.44-.16.825.107.682.783Z"></path></svg>
+      Telegram
+    </a>
+    <a id="btn-vk" class="hub-btn hub-btn--vk" href="https://vk.me/club237085543 RRR!!!">
+      <svg viewBox="0 0 24 24"><path d="M12.785 16.241s.288-.032.436-.194c.136-.148.132-.427.132-.427s-.02-1.304.587-1.496c.596-.19 1.362 1.26 2.174 1.817.613.42 1.08.328 1.08.328l2.17-.03s1.135-.07.597-.964c-.044-.073-.312-.66-1.608-1.864-1.357-1.261-1.175-1.057.46-3.24.995-1.328 1.392-2.14 1.268-2.487-.118-.332-.846-.244-.846-.244l-2.442.015s-.181-.025-.316.056c-.131.079-.216.263-.216.263s-.387 1.03-.903 1.905c-1.088 1.848-1.524 1.946-1.702 1.832-.415-.266-.311-1.07-.311-1.64 0-1.783.27-2.526-.527-2.718-.265-.064-.459-.106-1.135-.113-.868-.009-1.602.003-2.018.207-.277.136-.49.438-.36.455.16.021.524.098.716.36.249.338.24 1.096.24 1.096s.143 2.098-.334 2.358c-.327.178-.776-.186-1.738-1.854-.492-.854-.864-1.798-.864-1.798s-.072-.176-.2-.27c-.154-.115-.37-.151-.37-.151l-2.323.015s-.349.01-.477.162c-.114.135-.009.414-.009.414s1.82 4.258 3.881 6.402c1.889 1.965 4.033 1.836 4.033 1.836h.972Z"></path></svg>
+      ВКонтакте
+    </a>
+    <a id="btn-web" class="hub-btn hub-btn--web" href="https://web.aura-studio.tech RRR!!!">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
+      Открыть сайт
+    </a>
+  </div>
+
+  <p class="hub-footer">Aura AI © 2026</p>
+</main>
+
+<script>
+// ── Particle system ──
+(()=>{
+  const canvas=document.getElementById('bgCanvas');
+  const ctx=canvas.getContext('2d');
+  let w,h,mouse={x:null,y:null},particles=[];
+
+  function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight}
+  resize();
+  window.addEventListener('resize',resize);
+  window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
+  window.addEventListener('touchmove',e=>{mouse.x=e.touches[0].clientX;mouse.y=e.touches[0].clientY});
+
+  const colors=['#60b0ff','#c084fc','#f472b6','#818cf8','#34d399'];
+
+  class Particle{
+    constructor(){this.reset()}
+    reset(){
+      this.x=Math.random()*w;
+      this.y=Math.random()*h;
+      this.size=Math.random()*2.5+0.5;
+      this.speedX=(Math.random()-0.5)*0.35;
+      this.speedY=(Math.random()-0.5)*0.35;
+      this.color=colors[Math.floor(Math.random()*colors.length)];
+      this.alpha=Math.random()*0.5+0.15;
+      this.pulse=Math.random()*Math.PI*2;
+    }
+    update(){
+      this.x+=this.speedX;
+      this.y+=this.speedY;
+      this.pulse+=0.018;
+      if(mouse.x!==null){
+        const dx=mouse.x-this.x,dy=mouse.y-this.y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<200){
+          const force=(200-dist)/200*0.012;
+          this.speedX+=dx*force;
+          this.speedY+=dy*force;
+        }
+      }
+      this.speedX*=0.995;
+      this.speedY*=0.995;
+      if(this.x<-30)this.x=w+30;
+      if(this.x>w+30)this.x=-30;
+      if(this.y<-30)this.y=h+30;
+      if(this.y>h+30)this.y=-30;
+    }
+    draw(){
+      const a=this.alpha*(0.6+Math.sin(this.pulse)*0.4);
+      // Glow
+      ctx.globalAlpha=a*0.15;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.size*3,0,Math.PI*2);
+      ctx.fillStyle=this.color;
+      ctx.fill();
+      // Core
+      ctx.globalAlpha=a;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha=1;
+    }
+  }
+
+  const count=Math.min(60,Math.floor(w*h/14000));
+  for(let i=0;i<count;i++)particles.push(new Particle());
+
+  function drawLines(){
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x;
+        const dy=particles[i].y-particles[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<120){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.strokeStyle=particles[i].color;
+          ctx.globalAlpha=(1-dist/120)*0.06;
+          ctx.lineWidth=0.5;
+          ctx.stroke();
+          ctx.globalAlpha=1;
+        }
+      }
+    }
+  }
+
+  function animate(){
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p=>{p.update();p.draw()});
+    drawLines();
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// ── Link loading ──
+(async()=>{
+  const slug=window.location.pathname.replace(/^\//,'').replace(/\/$/,'');
+  const btnDiv=document.getElementById('buttons');
+  const loading=document.getElementById('loading');
+  const btnTg=document.getElementById('btn-tg');
+  const btnVk=document.getElementById('btn-vk');
+  const btnWeb=document.getElementById('btn-web');
+
+  const defaultTg='https://t.me/AuraVisionAI_bot';
+  const defaultVk='https://vk.me/club237085543';
+  const defaultWeb='https://web.aura-studio.tech';
+
+  try{
+    const resp=await fetch('/data/links.json?t='+Date.now());
+    const data=await resp.json();
+    if(slug && data[slug]){
+      btnTg.href=data[slug].tg;
+      btnVk.href=data[slug].vk;
+      if(data[slug].web){btnWeb.href=data[slug].web;btnWeb.classList.remove('hidden')}
+    }else{
+      btnTg.href=defaultTg;
+      btnVk.href=defaultVk;
+      btnWeb.href=defaultWeb;btnWeb.classList.remove('hidden');
+    }
+  }catch(e){
+    btnTg.href=defaultTg;
+    btnVk.href=defaultVk;
+    btnWeb.href=defaultWeb;btnWeb.classList.remove('hidden');
+  }
+
+  loading.classList.add('hidden');
+  btnDiv.classList.remove('hidden');
+})();
+</script>
+
+
+</body></html>

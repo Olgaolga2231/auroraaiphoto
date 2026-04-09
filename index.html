@@ -166,6 +166,26 @@ body{
   border-radius:50%;
   display:block;
 }
+/* fallback если картинка не загрузилась */
+.hub-logo .logo-fallback{
+  display:none;
+  position:relative;z-index:1;
+  width:100%;height:100%;
+  border-radius:50%;
+  background:linear-gradient(135deg,#60b0ff,#c084fc,#f472b6);
+  align-items:center;
+  justify-content:center;
+  font-size:64px;
+  font-weight:bold;
+  color:white;
+}
+.hub-logo img.error + .logo-fallback,
+.hub-logo img:not([src]) + .logo-fallback{
+  display:flex;
+}
+.hub-logo img.error{
+  display:none;
+}
 
 /* ── Title ── */
 h1{
@@ -307,7 +327,7 @@ h1{
 <body>
 
 <!-- Background image -->
-<img src="bg.png" alt="" class="bg-image">
+<img src="bg.png" alt="" class="bg-image" onerror="this.style.display='none'">
 <div class="bg-overlay"></div>
 
 <!-- Color orbs -->
@@ -326,7 +346,8 @@ h1{
 <!-- Hub card -->
 <main class="hub">
   <div class="hub-logo">
-    <img src="logo.png" alt="Aura AI">
+    <img src="logo.png" alt="Aura AI" onerror="this.classList.add('error'); this.parentElement.querySelector('.logo-fallback').style.display='flex'">
+    <div class="logo-fallback" style="display:none;">✨</div>
   </div>
   <h1>Aura AI</h1>
   <p class="hub-desc" id="subtitle">Превращаем фото в искусство</p>
@@ -495,6 +516,20 @@ h1{
   loading.classList.add('hidden');
   btnDiv.classList.remove('hidden');
 })();
+
+// Отладка: проверим, загружаются ли картинки
+window.addEventListener('load', function() {
+  console.log('Проверка загрузки картинок:');
+  var logo = new Image();
+  logo.onload = () => console.log('✅ logo.png загружен');
+  logo.onerror = () => console.error('❌ logo.png НЕ загружен (404)');
+  logo.src = 'logo.png';
+  
+  var bg = new Image();
+  bg.onload = () => console.log('✅ bg.png загружен');
+  bg.onerror = () => console.error('❌ bg.png НЕ загружен (404)');
+  bg.src = 'bg.png';
+});
 </script>
 
 </body></html>

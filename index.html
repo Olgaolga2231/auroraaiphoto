@@ -166,7 +166,6 @@ body{
   border-radius:50%;
   display:block;
 }
-/* fallback если картинка не загрузилась */
 .hub-logo .logo-fallback{
   display:none;
   position:relative;z-index:1;
@@ -355,15 +354,15 @@ h1{
   <div id="loading" class="hidden">Загрузка...</div>
 
   <div id="buttons" class="hub-links">
-    <a id="btn-tg" class="hub-btn hub-btn--tg" href="https://t.me/AuraVisionAI_bot">
+    <a id="btn-tg" class="hub-btn hub-btn--tg" href="https://t.me/AuraVisionAI_bot?start=rI1cs1V3MwZA">
       <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 1 0 24 12.056A12.013 12.013 0 0 0 11.944 0Zm5.091 7.044l-1.6 7.536c-.12.54-.44.67-.89.418l-2.46-1.81-1.187 1.14c-.132.132-.242.242-.496.242l.177-2.507 4.56-4.117c.198-.177-.043-.275-.308-.098l-5.64 3.55-2.43-.757c-.528-.166-.54-.528.11-.782l9.5-3.66c.44-.16.825.107.682.783Z"></path></svg>
       Telegram
     </a>
-    <a id="btn-vk" class="hub-btn hub-btn--vk" href="https://vk.me/club237085543">
+    <a id="btn-vk" class="hub-btn hub-btn--vk" href="https://vk.me/club237085543?ref=HMeyP17vvCdJ">
       <svg viewBox="0 0 24 24"><path d="M12.785 16.241s.288-.032.436-.194c.136-.148.132-.427.132-.427s-.02-1.304.587-1.496c.596-.19 1.362 1.26 2.174 1.817.613.42 1.08.328 1.08.328l2.17-.03s1.135-.07.597-.964c-.044-.073-.312-.66-1.608-1.864-1.357-1.261-1.175-1.057.46-3.24.995-1.328 1.392-2.14 1.268-2.487-.118-.332-.846-.244-.846-.244l-2.442.015s-.181-.025-.316.056c-.131.079-.216.263-.216.263s-.387 1.03-.903 1.905c-1.088 1.848-1.524 1.946-1.702 1.832-.415-.266-.311-1.07-.311-1.64 0-1.783.27-2.526-.527-2.718-.265-.064-.459-.106-1.135-.113-.868-.009-1.602.003-2.018.207-.277.136-.49.438-.36.455.16.021.524.098.716.36.249.338.24 1.096.24 1.096s.143 2.098-.334 2.358c-.327.178-.776-.186-1.738-1.854-.492-.854-.864-1.798-.864-1.798s-.072-.176-.2-.27c-.154-.115-.37-.151-.37-.151l-2.323.015s-.349.01-.477.162c-.114.135-.009.414-.009.414s1.82 4.258 3.881 6.402c1.889 1.965 4.033 1.836 4.033 1.836h.972Z"></path></svg>
       ВКонтакте
     </a>
-    <a id="btn-web" class="hub-btn hub-btn--web" href="https://web.aura-studio.tech">
+    <a id="btn-web" class="hub-btn hub-btn--web" href="https://web.aura-studio.tech/?ref=HMeyP17vvCdJ">
       <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
       Открыть сайт
     </a>
@@ -482,54 +481,20 @@ h1{
   animate();
 })();
 
-// ── Link loading ──
-(async()=>{
-  const slug=window.location.pathname.replace(/^\//,'').replace(/\/$/,'');
-  const btnDiv=document.getElementById('buttons');
-  const loading=document.getElementById('loading');
-  const btnTg=document.getElementById('btn-tg');
-  const btnVk=document.getElementById('btn-vk');
-  const btnWeb=document.getElementById('btn-web');
-
-  const defaultTg='https://t.me/AuraVisionAI_bot';
-  const defaultVk='https://vk.me/club237085543';
-  const defaultWeb='https://web.aura-studio.tech';
-
-  try{
-    const resp=await fetch('/data/links.json?t='+Date.now());
-    const data=await resp.json();
-    if(slug && data[slug]){
-      btnTg.href=data[slug].tg;
-      btnVk.href=data[slug].vk;
-      if(data[slug].web){btnWeb.href=data[slug].web;btnWeb.classList.remove('hidden')}
-    }else{
-      btnTg.href=defaultTg;
-      btnVk.href=defaultVk;
-      btnWeb.href=defaultWeb;btnWeb.classList.remove('hidden');
-    }
-  }catch(e){
-    btnTg.href=defaultTg;
-    btnVk.href=defaultVk;
-    btnWeb.href=defaultWeb;btnWeb.classList.remove('hidden');
-  }
-
-  loading.classList.add('hidden');
-  btnDiv.classList.remove('hidden');
-})();
-
-// Отладка: проверим, загружаются ли картинки
-window.addEventListener('load', function() {
-  console.log('Проверка загрузки картинок:');
-  var logo = new Image();
-  logo.onload = () => console.log('✅ logo.png загружен');
-  logo.onerror = () => console.error('❌ logo.png НЕ загружен (404)');
-  logo.src = 'logo.png';
+// ── Link loading (упрощённый, без fetch, чтобы реферальные ссылки работали всегда) ──
+(()=>{
+  const btnTg = document.getElementById('btn-tg');
+  const btnVk = document.getElementById('btn-vk');
+  const btnWeb = document.getElementById('btn-web');
+  const loading = document.getElementById('loading');
+  const btnDiv = document.getElementById('buttons');
   
-  var bg = new Image();
-  bg.onload = () => console.log('✅ bg.png загружен');
-  bg.onerror = () => console.error('❌ bg.png НЕ загружен (404)');
-  bg.src = 'bg.png';
-});
+  // Реферальные ссылки уже прописаны прямо в HTML, просто убираем "Загрузку..."
+  setTimeout(() => {
+    if(loading) loading.classList.add('hidden');
+    if(btnDiv) btnDiv.classList.remove('hidden');
+  }, 100);
+})();
 </script>
 
 </body></html>
